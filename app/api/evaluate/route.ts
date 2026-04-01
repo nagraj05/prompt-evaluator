@@ -32,15 +32,24 @@ export async function POST(req: NextRequest) {
   // Ensure baseModelId is included in modelIds (it will be called too)
   const allModelIds = Array.from(new Set([baseModelId, ...modelIds]));
 
-  const [evaluation] = await db
-    .insert(evaluations)
-    .values({
-      prompt,
-      systemPrompt: systemPrompt ?? null,
-      baseModelId,
-      modelIds: allModelIds,
-    })
-    .returning({ id: evaluations.id });
+  let evaluation: { id: string };
+  try {
+    const [row] = await db
+      .insert(evaluations)
+      .values({
+        prompt,
+        systemPrompt: systemPrompt ?? null,
+        baseModelId,
+        modelIds: allModelIds,
+      })
+      .returning({ id: evaluations.id });
+    evaluation = row;
+  } catch (err) {
+    const e = err as Error & { code?: string; detail?: string };
+    const message = e.detail ?? e.code ?? e.message ?? "Database error";
+    console.error("[/api/evaluate] DB error:", e.code, e.detail, e.message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 
   return NextResponse.json({ evaluationId: evaluation.id }, { status: 201 });
 }
