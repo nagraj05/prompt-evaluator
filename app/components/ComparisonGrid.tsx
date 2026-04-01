@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { ResponseCard, type ResponseState } from "./ResponseCard";
 
 interface ModelEntry {
@@ -71,10 +72,16 @@ export function ComparisonGrid({ evaluationId, baseModelId, modelIds }: Props) {
   return (
     <div className="flex flex-col gap-4">
       {streamError && (
-        <p className="text-sm text-red-500">{streamError}</p>
+        <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          {streamError}
+        </div>
       )}
       {done && (
-        <p className="text-sm text-neutral-400">All responses received.</p>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 border rounded-lg px-4 py-2.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+          All responses received.
+        </div>
       )}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
         {entries.map(({ modelId, isBase }) => (

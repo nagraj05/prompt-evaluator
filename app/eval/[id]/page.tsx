@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { evaluations } from "@/db/schema";
 import { ComparisonGrid } from "@/components/ComparisonGrid";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -22,22 +24,40 @@ export default async function EvalPage({ params }: Props) {
   const modelIds = evaluation.modelIds as string[];
 
   return (
-    <div className="max-w-7xl mx-auto w-full px-4 py-10 flex flex-col gap-6">
-      {/* Prompt summary */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">Evaluation</h1>
-        <p className="text-sm text-neutral-500 font-mono break-all">{evaluation.id}</p>
-        <div className="mt-3 rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 px-4 py-3 text-sm whitespace-pre-wrap">
+    <div className="max-w-7xl mx-auto w-full px-6 py-10 flex flex-col gap-8">
+      {/* Header */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold tracking-tight">Evaluation</h1>
+          <Badge variant="outline" className="font-mono text-xs">
+            {evaluation.id.slice(0, 8)}…
+          </Badge>
+          <span className="text-xs text-muted-foreground ml-auto">
+            {new Date(evaluation.createdAt).toLocaleString()}
+          </span>
+        </div>
+
+        <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm whitespace-pre-wrap leading-relaxed">
           {evaluation.prompt}
         </div>
+
         {evaluation.systemPrompt && (
-          <div className="mt-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 px-4 py-3 text-xs text-neutral-500 whitespace-pre-wrap">
-            <span className="font-medium">System:</span> {evaluation.systemPrompt}
+          <div className="rounded-lg border bg-muted/40 px-4 py-3 text-xs text-muted-foreground whitespace-pre-wrap">
+            <span className="font-semibold text-foreground">System: </span>
+            {evaluation.systemPrompt}
           </div>
         )}
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{modelIds.length} model{modelIds.length !== 1 ? "s" : ""}</span>
+          <Separator orientation="vertical" className="h-3" />
+          <span>Base: <span className="font-mono text-foreground">{evaluation.baseModelId}</span></span>
+        </div>
       </div>
 
-      {/* Comparison grid — client component handles SSE */}
+      <Separator />
+
+      {/* Comparison grid */}
       <ComparisonGrid
         evaluationId={id}
         baseModelId={evaluation.baseModelId}

@@ -1,5 +1,10 @@
 "use client";
 
+import { Loader2, AlertCircle, Clock, Coins } from "lucide-react";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
 export type ResponseState =
   | { status: "waiting" }
   | { status: "done"; text: string; latencyMs: number; inputTokens: number; outputTokens: number; costUsd: number }
@@ -17,51 +22,78 @@ function formatCost(usd: number) {
   return `$${usd.toFixed(4)}`;
 }
 
+function formatLatency(ms: number) {
+  if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${ms.toLocaleString()}ms`;
+}
+
 export function ResponseCard({ modelId, isBase, state }: Props) {
+  const provider = modelId.includes("/") ? modelId.split("/")[0] : "";
   const shortName = modelId.includes("/") ? modelId.split("/")[1] : modelId;
 
   return (
-    <div className="flex flex-col rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800">
-        {isBase && (
-          <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
-            base
-          </span>
-        )}
-        <span className="text-sm font-medium truncate" title={modelId}>
-          {shortName}
-        </span>
-        <span className="text-xs text-neutral-400 truncate hidden sm:block">
-          {modelId.includes("/") ? modelId.split("/")[0] : ""}
-        </span>
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 px-4 py-4 min-h-[160px]">
-        {state.status === "waiting" && (
-          <div className="flex items-center gap-2 text-sm text-neutral-400">
-            <span className="inline-block w-4 h-4 border-2 border-neutral-300 border-t-blue-500 rounded-full animate-spin" />
-            Waiting for response…
+    <Card className="flex flex-col overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              {isBase && (
+                <Badge variant="default" className="text-xs shrink-0">Base</Badge>
+              )}
+              <span className="text-sm font-semibold truncate" title={modelId}>
+                {shortName}
+              </span>
+            </div>
+            {provider && (
+              <p className="text-xs text-muted-foreground mt-0.5">{provider}</p>
+            )}
           </div>
+          <div className="shrink-0">
+            {state.status === "waiting" && (
+              <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+            )}
+            {state.status === "error" && (
+              <AlertCircle className="w-4 h-4 text-destructive" />
+            )}
+            {state.status === "done" && (
+              <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1" />
+            )}
+          </div>
+        </div>
+      </CardHeader>
+
+      <Separator />
+
+      <CardContent className="flex-1 pt-4 pb-4 min-h-[160px]">
+        {state.status === "waiting" && (
+          <p className="text-sm text-muted-foreground italic">Waiting for response…</p>
         )}
         {state.status === "error" && (
-          <p className="text-sm text-red-500">{state.message}</p>
+          <p className="text-sm text-destructive">{state.message}</p>
         )}
         {state.status === "done" && (
           <p className="text-sm whitespace-pre-wrap leading-relaxed">{state.text}</p>
         )}
-      </div>
+      </CardContent>
 
-      {/* Footer — stats */}
       {state.status === "done" && (
-        <div className="flex items-center gap-4 px-4 py-2 border-t border-neutral-200 dark:border-neutral-700 text-xs text-neutral-400">
-          <span>{state.latencyMs.toLocaleString()} ms</span>
-          <span>{state.inputTokens.toLocaleString()} in</span>
-          <span>{state.outputTokens.toLocaleString()} out</span>
-          <span className="ml-auto">{formatCost(state.costUsd)}</span>
-        </div>
+        <>
+          <Separator />
+          <CardFooter className="pt-3 pb-3 flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {formatLatency(state.latencyMs)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Coins className="w-3 h-3" />
+              {state.inputTokens.toLocaleString()} in · {state.outputTokens.toLocaleString()} out
+            </span>
+            <span className="ml-auto font-medium text-foreground">
+              {formatCost(state.costUsd)}
+            </span>
+          </CardFooter>
+        </>
       )}
-    </div>
+    </Card>
   );
 }

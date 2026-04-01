@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ChevronDown, X, BookmarkPlus, Check } from "lucide-react";
 import type { OpenRouterModel } from "@/lib/openrouter";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type Props = {
   baseModelId: string;
@@ -35,22 +41,18 @@ export function ModelPicker({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Base model dropdown
   const [baseSearch, setBaseSearch] = useState("");
   const [baseOpen, setBaseOpen] = useState(false);
   const baseRef = useRef<HTMLDivElement>(null);
 
-  // Comparison models dropdown
   const [compSearch, setCompSearch] = useState("");
   const [compOpen, setCompOpen] = useState(false);
   const compRef = useRef<HTMLDivElement>(null);
 
-  // Filters (apply to both dropdowns)
   const [providerFilter, setProviderFilter] = useState("all");
   const [contextFilter, setContextFilter] = useState(0);
   const [costTier, setCostTier] = useState<"all" | "free" | "paid">("all");
 
-  // Presets
   const [presets, setPresets] = useState<Preset[]>([]);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [presetName, setPresetName] = useState("");
@@ -77,7 +79,6 @@ export function ModelPicker({
       .catch(() => {});
   }, []);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (baseRef.current && !baseRef.current.contains(e.target as Node)) {
@@ -137,9 +138,7 @@ export function ModelPicker({
 
   function loadPreset(preset: Preset) {
     onBaseChange(preset.baseModelId);
-    onComparisonChange(
-      preset.modelIds.filter((id) => id !== preset.baseModelId)
-    );
+    onComparisonChange(preset.modelIds.filter((id) => id !== preset.baseModelId));
   }
 
   async function savePreset() {
@@ -167,16 +166,14 @@ export function ModelPicker({
   }
 
   if (error) {
-    return (
-      <div className="text-sm text-red-500">Failed to load models: {error}</div>
-    );
+    return <p className="text-sm text-destructive">Failed to load models: {error}</p>;
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* Filter bar */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs text-neutral-400 font-medium uppercase tracking-wide shrink-0">
+      <div className="flex flex-wrap gap-2 items-center p-3 rounded-lg bg-muted/50 border">
+        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider shrink-0 mr-1">
           Filters
         </span>
 
@@ -184,13 +181,11 @@ export function ModelPicker({
           value={providerFilter}
           onChange={(e) => setProviderFilter(e.target.value)}
           disabled={loading}
-          className="rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-2 py-1 text-xs outline-none disabled:opacity-50"
+          className="h-7 rounded-md border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 cursor-pointer"
         >
           <option value="all">All providers</option>
           {providers.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
+            <option key={p} value={p}>{p}</option>
           ))}
         </select>
 
@@ -198,26 +193,25 @@ export function ModelPicker({
           value={contextFilter}
           onChange={(e) => setContextFilter(Number(e.target.value))}
           disabled={loading}
-          className="rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-2 py-1 text-xs outline-none disabled:opacity-50"
+          className="h-7 rounded-md border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 cursor-pointer"
         >
           {CONTEXT_OPTIONS.map((o) => (
-            <option key={o.min} value={o.min}>
-              {o.label}
-            </option>
+            <option key={o.min} value={o.min}>{o.label}</option>
           ))}
         </select>
 
-        <div className="flex rounded border border-neutral-200 dark:border-neutral-700 overflow-hidden text-xs">
+        <div className="flex rounded-md border border-input overflow-hidden text-xs">
           {(["all", "free", "paid"] as const).map((tier) => (
             <button
               key={tier}
               type="button"
               onClick={() => setCostTier(tier)}
-              className={`px-2.5 py-1 capitalize transition-colors ${
+              className={cn(
+                "px-2.5 h-7 capitalize transition-colors",
                 costTier === tier
-                  ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                  : "bg-white dark:bg-neutral-900 text-neutral-500 hover:text-foreground"
-              }`}
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground"
+              )}
             >
               {tier}
             </button>
@@ -228,7 +222,7 @@ export function ModelPicker({
       {/* Preset bar */}
       {presets.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-neutral-400 font-medium uppercase tracking-wide shrink-0">
+          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider shrink-0">
             Presets
           </span>
           {presets.map((p) => (
@@ -236,7 +230,7 @@ export function ModelPicker({
               key={p.id}
               type="button"
               onClick={() => loadPreset(p)}
-              className="text-xs rounded-full border border-neutral-200 dark:border-neutral-700 px-2.5 py-0.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="text-xs rounded-full border border-input px-3 py-1 bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               {p.name}
             </button>
@@ -247,42 +241,35 @@ export function ModelPicker({
       {/* Model selectors */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* Base Model */}
-        <div>
-          <label className="block text-sm font-medium mb-1.5">Base model</label>
+        <div className="flex flex-col gap-2">
+          <Label>Base model</Label>
           <div ref={baseRef} className="relative">
             <button
               type="button"
               onClick={() => setBaseOpen((o) => !o)}
-              className="w-full flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 text-sm text-left"
               disabled={loading}
+              className="w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-accent/50 transition-colors disabled:opacity-50"
             >
-              <span className={baseModel ? "" : "text-neutral-400"}>
-                {loading
-                  ? "Loading models…"
-                  : baseModel
-                  ? baseModel.name
-                  : "Select base model"}
+              <span className={cn(baseModel ? "text-foreground" : "text-muted-foreground")}>
+                {loading ? "Loading models…" : baseModel ? baseModel.name : "Select base model"}
               </span>
-              <ChevronDown />
+              <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />
             </button>
 
             {baseOpen && (
-              <div className="absolute z-20 mt-1 w-full rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg">
-                <div className="p-2 border-b border-neutral-100 dark:border-neutral-800">
-                  <input
+              <div className="absolute z-20 mt-1 w-full rounded-lg border bg-popover shadow-lg overflow-hidden">
+                <div className="p-2 border-b">
+                  <Input
                     autoFocus
-                    type="text"
                     placeholder="Search models…"
                     value={baseSearch}
                     onChange={(e) => setBaseSearch(e.target.value)}
-                    className="w-full rounded border border-neutral-200 dark:border-neutral-700 bg-transparent px-2 py-1 text-sm outline-none"
+                    className="h-8 text-xs"
                   />
                 </div>
                 <ul className="max-h-60 overflow-y-auto">
                   {filteredBase.length === 0 ? (
-                    <li className="px-3 py-2 text-sm text-neutral-400">
-                      No models found
-                    </li>
+                    <li className="px-3 py-3 text-sm text-muted-foreground text-center">No models found</li>
                   ) : (
                     filteredBase.map((m) => (
                       <li key={m.id}>
@@ -293,18 +280,16 @@ export function ModelPicker({
                             setBaseSearch("");
                             setBaseOpen(false);
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 flex items-center justify-between gap-2 ${
-                            m.id === baseModelId
-                              ? "text-blue-600 dark:text-blue-400 font-medium"
-                              : ""
-                          }`}
+                          className={cn(
+                            "w-full text-left px-3 py-2 text-sm hover:bg-accent flex items-center justify-between gap-2 transition-colors",
+                            m.id === baseModelId && "text-primary font-medium"
+                          )}
                         >
                           <span className="truncate">{m.name}</span>
-                          {m.isFree && (
-                            <span className="shrink-0 text-xs text-green-600 dark:text-green-400">
-                              free
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {m.isFree && <Badge variant="success" className="text-xs py-0">free</Badge>}
+                            {m.id === baseModelId && <Check className="w-3.5 h-3.5 text-primary" />}
+                          </div>
                         </button>
                       </li>
                     ))
@@ -316,23 +301,23 @@ export function ModelPicker({
         </div>
 
         {/* Comparison Models */}
-        <div>
-          <label className="block text-sm font-medium mb-1.5">
+        <div className="flex flex-col gap-2">
+          <Label>
             Comparison models{" "}
             {comparisonModelIds.length > 0 && (
-              <span className="text-neutral-400 font-normal">
+              <span className="text-muted-foreground font-normal">
                 ({comparisonModelIds.length} selected)
               </span>
             )}
-          </label>
+          </Label>
           <div ref={compRef} className="relative">
             <button
               type="button"
               onClick={() => setCompOpen((o) => !o)}
-              className="w-full flex items-center justify-between rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 text-sm text-left"
               disabled={loading}
+              className="w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-accent/50 transition-colors disabled:opacity-50"
             >
-              <span className="text-neutral-400 truncate">
+              <span className="text-muted-foreground truncate">
                 {loading
                   ? "Loading models…"
                   : comparisonModelIds.length === 0
@@ -341,58 +326,51 @@ export function ModelPicker({
                       .map((id) => models.find((m) => m.id === id)?.name ?? id)
                       .join(", ")}
               </span>
-              <ChevronDown />
+              <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />
             </button>
 
             {compOpen && (
-              <div className="absolute z-20 mt-1 w-full rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg">
-                <div className="p-2 border-b border-neutral-100 dark:border-neutral-800 flex gap-2 items-center">
-                  <input
+              <div className="absolute z-20 mt-1 w-full rounded-lg border bg-popover shadow-lg overflow-hidden">
+                <div className="p-2 border-b flex gap-2 items-center">
+                  <Input
                     autoFocus
-                    type="text"
                     placeholder="Search models…"
                     value={compSearch}
                     onChange={(e) => setCompSearch(e.target.value)}
-                    className="flex-1 rounded border border-neutral-200 dark:border-neutral-700 bg-transparent px-2 py-1 text-sm outline-none"
+                    className="h-8 text-xs flex-1"
                   />
                   <button
                     type="button"
                     onClick={selectAllFiltered}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+                    className="text-xs text-primary hover:underline whitespace-nowrap shrink-0"
                   >
                     All
                   </button>
                   <button
                     type="button"
                     onClick={deselectAllFiltered}
-                    className="text-xs text-neutral-500 hover:text-foreground whitespace-nowrap"
+                    className="text-xs text-muted-foreground hover:text-foreground whitespace-nowrap shrink-0"
                   >
                     None
                   </button>
                 </div>
                 <ul className="max-h-60 overflow-y-auto">
                   {filteredComp.length === 0 ? (
-                    <li className="px-3 py-2 text-sm text-neutral-400">
-                      No models found
-                    </li>
+                    <li className="px-3 py-3 text-sm text-muted-foreground text-center">No models found</li>
                   ) : (
                     filteredComp.map((m) => {
                       const checked = comparisonModelIds.includes(m.id);
                       return (
                         <li key={m.id}>
-                          <label className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer">
+                          <label className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent cursor-pointer transition-colors">
                             <input
                               type="checkbox"
                               checked={checked}
                               onChange={() => toggleComparison(m.id)}
-                              className="accent-blue-600"
+                              className="accent-primary"
                             />
                             <span className="truncate flex-1">{m.name}</span>
-                            {m.isFree && (
-                              <span className="shrink-0 text-xs text-green-600 dark:text-green-400">
-                                free
-                              </span>
-                            )}
+                            {m.isFree && <Badge variant="success" className="text-xs py-0 shrink-0">free</Badge>}
                           </label>
                         </li>
                       );
@@ -400,11 +378,11 @@ export function ModelPicker({
                   )}
                 </ul>
                 {comparisonModelIds.length > 0 && (
-                  <div className="p-2 border-t border-neutral-100 dark:border-neutral-800">
+                  <div className="p-2 border-t">
                     <button
                       type="button"
                       onClick={() => onComparisonChange([])}
-                      className="text-xs text-neutral-500 hover:text-foreground"
+                      className="text-xs text-muted-foreground hover:text-foreground"
                     >
                       Clear all
                     </button>
@@ -416,22 +394,22 @@ export function ModelPicker({
 
           {/* Selected tags */}
           {comparisonModelIds.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
+            <div className="flex flex-wrap gap-1.5">
               {comparisonModelIds.map((id) => {
                 const name = models.find((m) => m.id === id)?.name ?? id;
                 return (
                   <span
                     key={id}
-                    className="inline-flex items-center gap-1 rounded-full bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-xs"
+                    className="inline-flex items-center gap-1 rounded-full bg-secondary text-secondary-foreground px-2.5 py-0.5 text-xs"
                   >
                     <span className="max-w-[140px] truncate">{name}</span>
                     <button
                       type="button"
                       onClick={() => toggleComparison(id)}
-                      className="text-neutral-400 hover:text-foreground leading-none"
+                      className="text-muted-foreground hover:text-foreground leading-none"
                       aria-label={`Remove ${name}`}
                     >
-                      ×
+                      <X className="w-3 h-3" />
                     </button>
                   </span>
                 );
@@ -444,24 +422,26 @@ export function ModelPicker({
       {/* Save as preset */}
       {baseModelId && (
         <div className="flex justify-end">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setSaveModalOpen(true)}
-            className="text-xs text-neutral-500 hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground"
           >
-            + Save as preset
-          </button>
+            <BookmarkPlus className="w-3.5 h-3.5" />
+            Save as preset
+          </Button>
         </div>
       )}
 
       {/* Save preset modal */}
       {saveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 w-80 shadow-xl">
-            <h3 className="text-sm font-semibold mb-3">Save preset</h3>
-            <input
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card text-card-foreground rounded-xl border shadow-xl p-6 w-80 flex flex-col gap-4">
+            <h3 className="text-sm font-semibold">Save preset</h3>
+            <Input
               autoFocus
-              type="text"
               placeholder="Preset name…"
               value={presetName}
               onChange={(e) => setPresetName(e.target.value)}
@@ -472,45 +452,31 @@ export function ModelPicker({
                   setPresetName("");
                 }
               }}
-              className="w-full rounded-md border border-neutral-200 dark:border-neutral-700 bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 mb-4"
             />
             <div className="flex gap-2 justify-end">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setSaveModalOpen(false);
                   setPresetName("");
                 }}
-                className="px-3 py-1.5 text-sm text-neutral-500 hover:text-foreground"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
                 onClick={savePreset}
                 disabled={!presetName.trim() || saving}
-                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
                 {saving ? "Saving…" : "Save"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
-}
-
-function ChevronDown() {
-  return (
-    <svg
-      className="w-4 h-4 shrink-0 text-neutral-400"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-    </svg>
   );
 }

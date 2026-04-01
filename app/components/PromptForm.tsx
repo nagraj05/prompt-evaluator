@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { ModelPicker } from "./ModelPicker";
 
 export function PromptForm() {
@@ -55,8 +59,7 @@ export function PromptForm() {
     }
   }
 
-  const totalModels =
-    comparisonModelIds.length + (baseModelId ? 1 : 0);
+  const totalModels = comparisonModelIds.length + (baseModelId ? 1 : 0);
   const canSubmit =
     prompt.trim().length > 0 &&
     !!baseModelId &&
@@ -65,45 +68,40 @@ export function PromptForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {/* Prompt textarea */}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="prompt" className="text-sm font-medium">
-          Prompt
-        </label>
-        <textarea
+      {/* Prompt */}
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="prompt">Prompt</Label>
+        <Textarea
           id="prompt"
           required
           rows={6}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Enter your prompt…"
-          className="resize-y rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="min-h-[140px]"
         />
       </div>
 
       {/* System prompt (collapsible) */}
-      <div>
+      <div className="flex flex-col gap-2">
         <button
           type="button"
           onClick={() => setShowSystemPrompt((v) => !v)}
-          className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-foreground transition-colors"
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
         >
-          <svg
-            className={`w-3 h-3 transition-transform ${showSystemPrompt ? "rotate-90" : ""}`}
-            fill="currentColor"
-            viewBox="0 0 6 10"
-          >
-            <path d="M1 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          System prompt (optional)
+          {showSystemPrompt ? (
+            <ChevronDown className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5" />
+          )}
+          System prompt <span className="text-xs">(optional)</span>
         </button>
         {showSystemPrompt && (
-          <textarea
+          <Textarea
             rows={3}
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             placeholder="Enter a system prompt…"
-            className="mt-2 w-full resize-y rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         )}
       </div>
@@ -116,21 +114,24 @@ export function PromptForm() {
         onComparisonChange={setComparisonModelIds}
       />
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
 
       {/* Submit */}
       <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {submitting
-            ? "Submitting…"
-            : totalModels > 0
-            ? `Compare across ${totalModels} model${totalModels === 1 ? "" : "s"}`
-            : "Compare models"}
-        </button>
+        <Button type="submit" disabled={!canSubmit} size="lg">
+          {submitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Submitting…
+            </>
+          ) : totalModels > 0 ? (
+            `Compare across ${totalModels} model${totalModels === 1 ? "" : "s"}`
+          ) : (
+            "Compare models"
+          )}
+        </Button>
       </div>
     </form>
   );
