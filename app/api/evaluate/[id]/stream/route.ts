@@ -61,7 +61,6 @@ export async function GET(
           let blobKey: string | null = null;
           try {
             blobKey = await uploadResponse(id, modelId, {
-              modelId,
               prompt: evaluation.prompt,
               systemPrompt: evaluation.systemPrompt,
               ...result,
