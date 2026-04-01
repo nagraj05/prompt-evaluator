@@ -4,6 +4,10 @@ import { env } from "./env";
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: env.OPENROUTER_API_KEY,
+  defaultHeaders: {
+    "HTTP-Referer": "http://localhost:3000",
+    "X-Title": "Prompt Evaluator",
+  },
 });
 
 export type ModelResult = {

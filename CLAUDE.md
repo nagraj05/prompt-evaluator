@@ -29,7 +29,7 @@ OPENROUTER_API_KEY=        # OpenRouter key
 BLOB_READ_WRITE_TOKEN=     # Vercel Blob read/write token
 ```
 
-## DB Schema (`src/db/schema.ts`)
+## DB Schema (`app/db/schema.ts`)
 - `presets` — id, name, base_model_id, model_ids (jsonb), timestamps
 - `evaluations` — id, prompt, system_prompt, base_model_id, model_ids (jsonb), created_at
 - `responses` — id, evaluation_id, model_id, is_base, text, latency_ms, input_tokens, output_tokens, cost_usd, blob_key, created_at
@@ -57,34 +57,45 @@ BLOB_READ_WRITE_TOKEN=     # Vercel Blob read/write token
 app/
   layout.tsx                        # Nav: "New Evaluation" | "History"
   page.tsx                          # Home — PromptForm
-  eval/[id]/page.tsx                # Comparison grid view
-  history/page.tsx                  # Past evaluations
-  api/models/route.ts
-  api/evaluate/route.ts
-  api/evaluate/[id]/stream/route.ts
-  api/presets/route.ts
-  api/presets/[id]/route.ts
-  api/history/route.ts
-src/
-  db/client.ts                      # Neon DB singleton
-  db/schema.ts                      # Drizzle schema
-  lib/env.ts                        # Zod env validation (throws on missing vars)
-  lib/openrouter.ts                 # callModel() + fetchModels()
-  lib/blob.ts                       # uploadResponse() / getResponse() via Vercel Blob
+  eval/[id]/page.tsx                # Comparison grid view (server component → ComparisonGrid)
+  history/page.tsx                  # Past evaluations (Phase 4)
+  api/
+    models/route.ts                 # OpenRouter model list, cached 6h
+    evaluate/route.ts               # POST — create evaluation row
+    evaluate/[id]/stream/route.ts   # GET SSE — parallel model calls, store to DB + Blob
+    presets/route.ts                # GET list / POST create
+    presets/[id]/route.ts           # DELETE
+    history/route.ts                # GET list (Phase 4)
+  db/
+    client.ts                       # neon() + drizzle(neon-http) singleton
+    schema.ts                       # Drizzle schema (presets, evaluations, responses)
+  lib/
+    env.ts                          # Zod env validation (throws on missing vars)
+    openrouter.ts                   # callModel() + fetchModels()
+    blob.ts                         # uploadResponse() / getResponse() via Vercel Blob
   components/
-    PromptForm.tsx
-    ModelPicker.tsx
-    PresetManager.tsx
-    ComparisonGrid.tsx
-    ResponseCard.tsx
+    PromptForm.tsx                  # Prompt + system prompt + ModelPicker + submit
+    ModelPicker.tsx                 # Base/comparison picker with filters, presets bar, save modal
+    ComparisonGrid.tsx              # SSE client, drives ResponseCard per model
+    ResponseCard.tsx                # waiting / done / error card with stats footer
+    PresetManager.tsx               # (Phase 3 remaining — load/save/delete presets standalone)
+scripts/
+  migrate.ts                        # One-shot HTTP migration (workaround for WSL/drizzle-kit bug)
 ```
 
 ## Implementation Progress
 - [x] Phase 1 — Foundation (schema, DB client, env validation, layout)
 - [x] Phase 2 — OpenRouter integration (model fetch, evaluate endpoint, SSE stream, blob)
-- [ ] Phase 3 — Core UI (PromptForm, ModelPicker, PresetManager, ComparisonGrid, ResponseCard)
+- [x] Phase 3 — Core UI (PromptForm, ModelPicker, ComparisonGrid, ResponseCard, eval page)
 - [ ] Phase 4 — History (history page, re-run, serve from DB for completed evals)
 - [ ] Phase 5 — Polish (keyboard shortcuts, copy, export, error states)
+
+## Critical Gotchas (learned the hard way)
+- **Path alias**: `tsconfig.json` maps `@/*` → `./app/*` (NOT `./src/*` or `./`). All imports use this.
+- **Drizzle driver**: Use `drizzle-orm/neon-http` with `neon()` HTTP client. Do NOT use `drizzle-orm/neon-serverless` — driver mismatch causes silent 500s with no console output.
+- **drizzle-kit push hangs on WSL**: WebSocket driver blocks indefinitely. Use `scripts/migrate.ts` instead: `bun --env-file=.env.local scripts/migrate.ts`
+- **Dynamic route params**: Always `await params` — `{ params }: { params: Promise<{ id: string }> }`
+- **NeonDbError**: Extract message via `e.detail ?? e.code ?? e.message` — `e.sourceError` is always undefined.
 
 ## Next.js 16 — Important Notes
 - Use `use cache` directive + `cacheTag()` / `cacheLife()` instead of `unstable_cache` (deprecated)

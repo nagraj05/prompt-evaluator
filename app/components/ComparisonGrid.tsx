@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ResponseCard, type ResponseState } from "./ResponseCard";
 
 interface ModelEntry {
@@ -22,12 +22,8 @@ export function ComparisonGrid({ evaluationId, baseModelId, modelIds }: Props) {
   });
   const [done, setDone] = useState(false);
   const [streamError, setStreamError] = useState<string | null>(null);
-  const didStart = useRef(false);
 
   useEffect(() => {
-    if (didStart.current) return;
-    didStart.current = true;
-
     const es = new EventSource(`/api/evaluate/${evaluationId}/stream`);
 
     es.onmessage = (e) => {
