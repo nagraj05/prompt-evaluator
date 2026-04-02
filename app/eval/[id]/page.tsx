@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
@@ -9,10 +10,7 @@ import { Separator } from "@/components/ui/separator";
 interface Props {
   params: Promise<{ id: string }>;
 }
-
-export default async function EvalPage({ params }: Props) {
-  const { id } = await params;
-
+async function EvalContent({ id }: { id: string }) {
   const [evaluation] = await db
     .select()
     .from(evaluations)
@@ -25,7 +23,6 @@ export default async function EvalPage({ params }: Props) {
 
   return (
     <div className="max-w-7xl mx-auto w-full px-6 py-10 flex flex-col gap-8">
-      {/* Header */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold tracking-tight">Evaluation</h1>
@@ -57,7 +54,6 @@ export default async function EvalPage({ params }: Props) {
 
       <Separator />
 
-      {/* Comparison grid */}
       <ComparisonGrid
         evaluationId={id}
         baseModelId={evaluation.baseModelId}
@@ -65,4 +61,9 @@ export default async function EvalPage({ params }: Props) {
       />
     </div>
   );
+}
+
+export default async function EvalPage({ params }: Props) {
+  const { id } = await params;
+  return <EvalContent id={id} />;
 }

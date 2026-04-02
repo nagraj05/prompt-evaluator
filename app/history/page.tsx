@@ -4,13 +4,25 @@ import { evaluations } from "@/db/schema";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, ClockIcon } from "lucide-react";
+import { unstable_cache } from "next/cache";
+
+
+const getHistory = unstable_cache(
+  async () => {
+    return db
+      .select()
+      .from(evaluations)
+      .orderBy(desc(evaluations.createdAt))
+      .limit(50);
+  },
+  ["history"], 
+  {
+    revalidate: 30,
+  }
+);
 
 export default async function HistoryPage() {
-  const rows = await db
-    .select()
-    .from(evaluations)
-    .orderBy(desc(evaluations.createdAt))
-    .limit(50);
+  const rows = await getHistory();
 
   return (
     <div className="max-w-3xl mx-auto w-full px-6 py-12 flex flex-col gap-8">
@@ -47,19 +59,28 @@ export default async function HistoryPage() {
                   <p className="text-sm font-medium line-clamp-2 leading-snug">
                     {ev.prompt}
                   </p>
+
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs text-muted-foreground">
                       {new Date(ev.createdAt).toLocaleString()}
                     </span>
+
                     <span className="text-muted-foreground/40 text-xs">·</span>
+
                     <Badge variant="secondary" className="text-xs py-0">
-                      {modelIds.length} model{modelIds.length !== 1 ? "s" : ""}
+                      {modelIds.length} model
+                      {modelIds.length !== 1 ? "s" : ""}
                     </Badge>
-                    <Badge variant="outline" className="text-xs py-0 font-mono">
+
+                    <Badge
+                      variant="outline"
+                      className="text-xs py-0 font-mono"
+                    >
                       {provider}
                     </Badge>
                   </div>
                 </div>
+
                 <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
             );

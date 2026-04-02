@@ -1,4 +1,4 @@
-import { put, get } from "@vercel/blob";
+import { put } from "@vercel/blob";
 
 export async function uploadResponse(
   evaluationId: string,
@@ -17,8 +17,7 @@ export async function uploadResponse(
 }
 
 export async function getResponse(blobUrl: string): Promise<object> {
-  const res = await get(blobUrl);
-  if (!res) throw new Error(`Blob not found: ${blobUrl}`);
-  const text = await res.text();
-  return JSON.parse(text) as object;
+  const res = await fetch(blobUrl);
+  if (!res.ok) throw new Error(`Blob not found: ${blobUrl}`);
+  return res.json() as Promise<object>;
 }
