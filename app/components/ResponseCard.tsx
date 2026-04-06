@@ -64,7 +64,7 @@ export function ResponseCard({ modelId, isBase, state }: Props) {
 
       <Separator />
 
-      <CardContent className="flex-1 pt-4 pb-4 min-h-[160px]">
+      <CardContent className="pt-4 pb-4 min-h-[160px] max-h-[520px] overflow-y-auto">
         {state.status === "waiting" && (
           <p className="text-sm text-muted-foreground italic">Waiting for response…</p>
         )}

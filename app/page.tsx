@@ -1,15 +1,34 @@
-import { PromptForm } from "@/components/PromptForm";
+"use client";
 
-export default function Home() {
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { SignInButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
+
+export default function LandingPage() {
+  const { isSignedIn, isLoaded } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace("/evaluate");
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  if (!isLoaded || isSignedIn) return null;
+
   return (
-    <div className="max-w-3xl mx-auto w-full px-6 py-12 flex flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">New Evaluation</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Compare a prompt across multiple models side-by-side.
+    <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <h1 className="text-4xl font-bold tracking-tight">Prompt Evaluator</h1>
+        <p className="text-muted-foreground max-w-sm">
+          Compare LLM responses across models in real time.
         </p>
       </div>
-      <PromptForm />
+      <SignInButton mode="redirect" fallbackRedirectUrl="/evaluate">
+        <Button size="lg">Sign in</Button>
+      </SignInButton>
     </div>
   );
 }

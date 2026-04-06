@@ -52,6 +52,12 @@ export function PromptForm() {
       }
 
       const { evaluationId } = (await res.json()) as { evaluationId: string };
+      setPrompt("");
+      setSystemPrompt("");
+      setShowSystemPrompt(false);
+      setBaseModelId("");
+      setComparisonModelIds([]);
+      setSubmitting(false);
       router.push(`/eval/${evaluationId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

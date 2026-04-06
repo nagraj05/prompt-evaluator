@@ -4,25 +4,13 @@ import { evaluations } from "@/db/schema";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, ClockIcon } from "lucide-react";
-import { unstable_cache } from "next/cache";
-
-
-const getHistory = unstable_cache(
-  async () => {
-    return db
-      .select()
-      .from(evaluations)
-      .orderBy(desc(evaluations.createdAt))
-      .limit(50);
-  },
-  ["history"], 
-  {
-    revalidate: 30,
-  }
-);
 
 export default async function HistoryPage() {
-  const rows = await getHistory();
+  const rows = await db
+    .select()
+    .from(evaluations)
+    .orderBy(desc(evaluations.createdAt))
+    .limit(50);
 
   return (
     <div className="max-w-3xl mx-auto w-full px-6 py-12 flex flex-col gap-8">
