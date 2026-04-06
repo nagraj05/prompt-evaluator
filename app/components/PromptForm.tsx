@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import type { OpenRouterModel } from "@/lib/openrouter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,10 @@ import { ModelPicker } from "./ModelPicker";
 
 export function PromptForm() {
   const router = useRouter();
+  const [models, setModels] = useState<OpenRouterModel[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+
   const [prompt, setPrompt] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [showSystemPrompt, setShowSystemPrompt] = useState(false);
@@ -17,6 +22,22 @@ export function PromptForm() {
   const [comparisonModelIds, setComparisonModelIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/models")
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed to fetch models: ${r.status}`);
+        return r.json() as Promise<OpenRouterModel[]>;
+      })
+      .then((data) => {
+        setModels(data);
+        setModelsLoading(false);
+      })
+      .catch((err: unknown) => {
+        setModelsError(err instanceof Error ? err.message : "Failed to load models");
+        setModelsLoading(false);
+      });
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,6 +84,19 @@ export function PromptForm() {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setSubmitting(false);
     }
+  }
+
+  if (modelsLoading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
+        <Loader2 className="w-8 h-8 animate-spin" />
+        <p className="text-sm">Loading models…</p>
+      </div>
+    );
+  }
+
+  if (modelsError) {
+    return <p className="text-sm text-destructive">Failed to load models: {modelsError}</p>;
   }
 
   const totalModels = comparisonModelIds.length + (baseModelId ? 1 : 0);
@@ -114,15 +148,14 @@ export function PromptForm() {
 
       {/* Model picker */}
       <ModelPicker
+        models={models}
         baseModelId={baseModelId}
         comparisonModelIds={comparisonModelIds}
         onBaseChange={setBaseModelId}
         onComparisonChange={setComparisonModelIds}
       />
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Submit */}
       <div className="flex justify-end">

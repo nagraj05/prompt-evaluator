@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 type Props = {
+  models: OpenRouterModel[];
   baseModelId: string;
   comparisonModelIds: string[];
   onBaseChange: (modelId: string) => void;
@@ -32,15 +33,12 @@ const CONTEXT_OPTIONS = [
 ];
 
 export function ModelPicker({
+  models,
   baseModelId,
   comparisonModelIds,
   onBaseChange,
   onComparisonChange,
 }: Props) {
-  const [models, setModels] = useState<OpenRouterModel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [baseSearch, setBaseSearch] = useState("");
   const [baseOpen, setBaseOpen] = useState(false);
   const baseRef = useRef<HTMLDivElement>(null);
@@ -59,20 +57,6 @@ export function ModelPicker({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/models")
-      .then((r) => {
-        if (!r.ok) throw new Error(`Failed to fetch models: ${r.status}`);
-        return r.json() as Promise<OpenRouterModel[]>;
-      })
-      .then((data) => {
-        setModels(data);
-        setLoading(false);
-      })
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Failed to load models");
-        setLoading(false);
-      });
-
     fetch("/api/presets")
       .then((r) => r.json() as Promise<Preset[]>)
       .then(setPresets)
@@ -165,9 +149,6 @@ export function ModelPicker({
     }
   }
 
-  if (error) {
-    return <p className="text-sm text-destructive">Failed to load models: {error}</p>;
-  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -180,7 +161,6 @@ export function ModelPicker({
         <select
           value={providerFilter}
           onChange={(e) => setProviderFilter(e.target.value)}
-          disabled={loading}
           className="h-7 rounded-md border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 cursor-pointer"
         >
           <option value="all">All providers</option>
@@ -192,7 +172,6 @@ export function ModelPicker({
         <select
           value={contextFilter}
           onChange={(e) => setContextFilter(Number(e.target.value))}
-          disabled={loading}
           className="h-7 rounded-md border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 cursor-pointer"
         >
           {CONTEXT_OPTIONS.map((o) => (
@@ -247,11 +226,10 @@ export function ModelPicker({
             <button
               type="button"
               onClick={() => setBaseOpen((o) => !o)}
-              disabled={loading}
-              className="w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-accent/50 transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-accent/50 transition-colors"
             >
               <span className={cn(baseModel ? "text-foreground" : "text-muted-foreground")}>
-                {loading ? "Loading models…" : baseModel ? baseModel.name : "Select base model"}
+                {baseModel ? baseModel.name : "Select base model"}
               </span>
               <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />
             </button>
@@ -314,13 +292,10 @@ export function ModelPicker({
             <button
               type="button"
               onClick={() => setCompOpen((o) => !o)}
-              disabled={loading}
-              className="w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-accent/50 transition-colors disabled:opacity-50"
+              className="w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-left hover:bg-accent/50 transition-colors"
             >
               <span className="text-muted-foreground truncate">
-                {loading
-                  ? "Loading models…"
-                  : comparisonModelIds.length === 0
+                {comparisonModelIds.length === 0
                   ? "Select comparison models"
                   : comparisonModelIds
                       .map((id) => models.find((m) => m.id === id)?.name ?? id)
